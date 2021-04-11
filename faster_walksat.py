@@ -9,33 +9,32 @@ def read_file(filename):
     count = 0
 
     for line in open(filename):
-        # skip comment lines
         if line[0] == 'c':
+            # skip comment lines
             continue
-
-        # save number of variables of the problem and create a list that stores the index numbers of clauses where the literal appears
-        if line[0] == 'p':
+        elif line[0] == 'p':
+            # save number of variables of the problem and create a list that stores the index numbers of clauses where the literal appears
             num_vars = int(line.split()[2])
             lit_clause = [[] for _ in range(num_vars * 2 + 1)]
             continue
+        else:
+            # read clause and for each literal in the clause record the index of the clause in which it appears
+            clause = []
+            for literal in line[:-2].split():
+                literal = int(literal)
+                clause.append(literal)
+                lit_clause[literal].append(count)
 
-        # read clause and for each literal in the clause record the index of the clause in which it appears
-        clause = []
-        for literal in line[:-2].split():
-            literal = int(literal)
-            clause.append(literal)
-            lit_clause[literal].append(count)
-
-        clauses.append(clause)
-        count += 1
+            clauses.append(clause)
+            count += 1
 
     return clauses, num_vars, lit_clause
 
 
-def get_random_interpretation(n_vars):
+def get_random_interpretation(num_vars):
     # generate a list with random positive and negative values for each variable in the problem 
     # note that lenth of the list is num_vars + 1, so variable 1 corresponds to position 1 in the list
-    return [i if random.random() < 0.5 else -i for i in range(n_vars + 1)]
+    return [i if random.random() < 0.5 else -i for i in range(num_vars + 1)]
 
 
 def get_true_sat_lit(clauses, interpretation):
@@ -101,12 +100,12 @@ def walksat(clauses, num_vars, lit_clause, max_flips_proportion=4):
         true_sat_lit = get_true_sat_lit(clauses, interpretation)
         
         for _ in range(max_flips):
-            unsatisfied_clauses_index = [index for index, true_lit in enumerate(true_sat_lit) if not true_lit]
+            unsat_clauses_index = [index for index, true_lit in enumerate(true_sat_lit) if not true_lit]
 
-            if not unsatisfied_clauses_index:
+            if not unsat_clauses_index:
                 return interpretation
 
-            clause_index = random.choice(unsatisfied_clauses_index)
+            clause_index = random.choice(unsat_clauses_index)
             unsatisfied_clause = clauses[clause_index]
 
             lit_to_flip = compute_broken(unsatisfied_clause, true_sat_lit, lit_clause)
